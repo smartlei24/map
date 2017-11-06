@@ -1,0 +1,75 @@
+html, body {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+  }
+
+#container{
+    height: 100%;
+    width: 100%;
+    margin:0;
+    padding-right: 286px;
+}
+
+#rightArea {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 286px;
+    background-color: #f2f2f2;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+}
+
+.panel {
+    margin: 0;
+    padding: 0;
+    background-color: #f2f2f2;
+}
+
+#infoDiv {
+    background-color: white;
+    color: black;
+    padding: 6px;
+    display: none;
+    width: 400px;
+  }
+
+#layerList {
+    height: 40%;
+}
+
+#details, #spatialAnalysis {
+    height: 30%;
+}
+
+.Menucontainer {
+    padding: 6px 0px 6px 7px !important;
+    margin: 0 !important;
+    display: block;
+    -webkit-margin-before: 1em;
+    -webkit-margin-after: 1em;
+    -webkit-margin-start: 0px;
+    -webkit-margin-end: 0px;
+    -webkit-padding-start: 40px;
+}
+
+.fullwidth {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    box-sizing: inherit;
+    font-size: 14px;
+    line-height: 1.3em;
+    margin: 3px 0px;
+    background-color: #ffffff;
+    padding: 9px 15px 9px 20px;
+    border-bottom: 1px solid rgba(50,50,50,0.25);
+    vertical-align: middle;
+    cursor: pointer;
+}
