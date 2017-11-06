@@ -326,7 +326,7 @@ require([
     $('.modelSubmit').click(function (event) {
         var modelType = $(event.target).attr("id");
         var modalName = $(event.target).attr('data-modal');
-        if(ValidateInput(modalName) == false)return;
+        if (ValidateInput(modalName) == false) return;
         switch (modelType) {
             case "cxxl":
                 $('#whqtcxks').modal('hide');
@@ -453,18 +453,17 @@ require([
         $('#infoDiv').append(htmlString);
     }
 
-    function ValidateInput(modalName){
+    function ValidateInput(modalName) {
         var conctrols = $('#' + modalName + ' input[type=text]');
-        var radioInput = $('input[name='+modalName+'_radio]');
-        var selectedValue = $('input[name="'+modalName+'_radio"]:checked').val();
-        if(radioInput.length > 0 && selectedValue == undefined)
-        {
+        var radioInput = $('input[name=' + modalName + '_radio]');
+        var selectedValue = $('input[name="' + modalName + '_radio"]:checked').val();
+        if (radioInput.length > 0 && selectedValue == undefined) {
             alert("请选择参数");
             return false;
         }
-        conctrols.each(function() {
+        conctrols.each(function () {
             var value = $(this).val
-            if(value == undefined || value.isNaN){
+            if (value == undefined || value.isNaN) {
                 alert("输入有误，请检查输入");
                 return false;
             }
@@ -474,7 +473,7 @@ require([
 
     function ClearInput(modalName) {
         var conctrols = $('#' + modalName + ' input');
-        conctrols.forEach(function(conctrol) {
+        conctrols.forEach(function (conctrol) {
             conctrol.val('');
         }, this);
     }
@@ -790,19 +789,27 @@ require([
     }
 
     function closestFacilityAnalysis() {
-        var clickListen = on(view, "click", addStop);
-        var closetTask = new ClosestFacilityTask({
+        var clickListen = on(view, "click", addIncidents);
+        var closestFireControl = new ClosestFacilityTask({
             url: "http://localhost:6080/arcgis/rest/services/NetWork_MianYang/NAServer/ClosestFireControl"
         });
+        var closestHospital = new ClosestFacilityTask({
+            url: "http://localhost:6080/arcgis/rest/services/NetWork_MianYang/NAServer/ClosestHospital"
+        });
+        closestFireControl.forlayer = fireControlLayer;
+        closestHospital.forlayer = hospitalLayer;
+
         var routeLyr = new GraphicsLayer({
             listMode: "hide"
         });
+
         map.add(routeLyr);
         var closestParams = new ClosestFacilityParameters({
             incidents: new FeatureSet(),
-            defaultCutoff: 300,
-            returnFacilities: true,
+            defaultCutoff: 300000,
+            returnFacilities: false,
             returnIncidents: false,
+            returnRoutes: true,
             outSpatialReference: {
                 wkid: 3857
             }
@@ -812,31 +819,35 @@ require([
             width: 3
         });
 
-        function addStop(event) {
+        function addIncidents(event) {
             if (event.button == 0) {
                 var incidents = new Graphic({
                     geometry: event.mapPoint,
                     symbol: stopSymbol
                 });
+                routeLyr.add(incidents);
 
-                closestParams.facilities = fireControlLayer;
-                closestParams.incidents.features.push(incidents)
-                closetTask.solve(closestParams).then(showRoute, function (error) {
-                    console.log(error);
-                })
+                closestParams.incidents.features.push(incidents);
+                var closestTask = [closestFireControl, closestHospital];
+                closestTask.forEach(function (task) {
+                    closestParams.facilities = task.forlayer;
+                    task.solve(closestParams).then(showRoute, function (error) {
+                        console.log(error);
+                    })
+                }, this);
             }
             clickListen.remove();
             $('#map').css("cursor", "default");
 
             //右键删除事件监听，删除图层
-            if (event.button == 2) {
+            if (event.button == 2)
                 map.remove(routeLyr);
-            }
         }
 
         function showRoute(data) {
-            console.log(data.routes);
-            array.forEach(data.routes, function (route, index) {
+            console.log(data);
+            data.routes.forEach(function (route) {
+                route.symbol = routeSymbol;
                 routeLyr.add(route);
             }, this);
         }
