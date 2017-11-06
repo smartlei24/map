@@ -1,14 +1,15 @@
-html, body {
+html,
+body {
     padding: 0;
     margin: 0;
     height: 100%;
     width: 100%;
-  }
+}
 
-#container{
+#container {
     height: 100%;
     width: 100%;
-    margin:0;
+    margin: 0;
     padding-right: 286px;
 }
 
@@ -38,13 +39,14 @@ html, body {
     padding: 6px;
     display: none;
     width: 400px;
-  }
+}
 
 #layerList {
     height: 40%;
 }
 
-#details, #spatialAnalysis {
+#details,
+#spatialAnalysis {
     height: 30%;
 }
 
@@ -69,7 +71,7 @@ html, body {
     margin: 3px 0px;
     background-color: #ffffff;
     padding: 9px 15px 9px 20px;
-    border-bottom: 1px solid rgba(50,50,50,0.25);
+    border-bottom: 1px solid rgba(50, 50, 50, 0.25);
     vertical-align: middle;
     cursor: pointer;
 }
