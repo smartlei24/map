@@ -477,6 +477,14 @@ require([
         conctrols.val('');
     }
 
+
+    /**
+     * 四个模型的地图处理
+     * 
+     * 1. add...() 在地图上添加事故点标志
+     * 2. solve....()  调用模型的函数，将处理结果加至 事故处理图层
+     */
+
     function addPlumeModelDot(event) {
         if (event.button == 0) {
             var modelDot = new Graphic({
@@ -525,7 +533,7 @@ require([
         var windSpeed = $('#fs-cx').val();
         var source = $('#xlyq-cx').val();
         var angle = $('#fx-cx').val();
-        var level = $("input[name='cxxl_radio']:checked").attr('value');
+        var level = $("input[name='whqtcxks_radio']:checked").attr('value');
         var concentration = $('#jsnd-cx').val();
         var plume = new PlumeModel(concentration, mapPoint.x, mapPoint.y, level, windSpeed, 5, source, 2, angle);
         var ring = plume.getRings();
@@ -563,7 +571,7 @@ require([
         var windSpeed = $('#ssfs').val();
         var source = $('#ssxlyq').val();
         var angle = $('#ssfx').val();
-        var level = $("input[name='ssxl_radio']:checked").attr('value');
+        var level = $("input[name='whqtsxks_radio']:checked").attr('value');
         var concentration = $('#jsnd-ss').val();
         var puff = new PuffModel(mapPoint.x, mapPoint.y, 5, 2, windSpeed, concentration, level, source, 30, angle);
         var ring = puff.GetPuffRings();
@@ -846,26 +854,44 @@ require([
     }
 
     //四个模型
+
+    /**
+     * 根据以下参数，计算对应位置的烟团模型的等值线  -->瞬时扩散
+     * 
+     * @param {number} x 泄漏发生点的X坐标
+     * @param {number} y 泄漏发生点的Y坐标
+     * @param {number} z 泄漏发生点的高度 为简化直接带入5
+     * @param {number} h 泄漏容器的高度，为简化直接带入2
+     * @param {any} windspeed 风速m/s
+     * @param {any} concentration 需要计算等值面的浓度值
+     * @param {any} level 环境稳定因素的等级，界面的单选 A\B...
+     * @param {any} souceStrong 泄漏的源强 指总共泄漏的量 mg
+     * @param {any} time 需要计算的时间 s
+     * @param {any} angle 风向
+     */
     function PuffModel(x, y, z, h, windspeed, concentration, level, souceStrong, time, angle) {
-        this.X = x;
-        this.Y = y;
-        this.Z = z;
+        this.X = x;  
+        this.Y = y;  
+        this.Z = z;  
         this.H = h;
-        this.level = level;
+        this.level = level; 
         this.windspeed = windspeed;
-        this.concentration = concentration;
+        this.concentration = concentration; 
         this.time = time;
         this.angle = angle;
         this.souceStrong = souceStrong;
 
+        //计算横向扩散系数
         this.ChangeGammaY = function (stability, x) {
             return x / 4.3;
         };
 
+        //计算垂直扩散系数
         this.ChangeGammaZ = function (stability, x) {
             return 5 / 2.15;
         };
 
+        //计算等值线的坐标， 返回坐标[[x1, y1],[x2, y2]]的数组
         this.GetPuffRings = function () {
             var points = [
                 [this.X, this.Y]
@@ -875,10 +901,13 @@ require([
             var i;
             var x1;
             var tmp;
+            var x2, y2;
             for (i = 1; i < 3000; i += 1) {
                 x1 = 0.5 * i;
                 tmp = this.RelativeY(this.concentration, this.time, x1, this.Z, this.H, this.level, this.windspeed, this.souceStrong);
                 if (!(tmp == 0 || isNaN(tmp))) {
+                    x2 = Math.cos(x1) + Math.sin(tmp);
+                    y2 = Math.cos(tmp) - Math.sin(x1);
                     relativeYlArayy.push(tmp);
                     points.push([this.X + x1, this.Y + tmp]);
                 }
@@ -891,6 +920,7 @@ require([
             return points;
         };
 
+        //根据参数,被GetPuffRings()以0.5m的步进循环调用，计算当前步长(x)的Y的相对位置
         this.RelativeY = function (concentration, time, xCoodinate, zCoodinate, high, stability, windSpeed, souceStrong) {
             var sigmaY = this.ChangeGammaY(stability, xCoodinate) * time;
             var sigmaZ = this.ChangeGammaZ(stability, xCoodinate) * time;
@@ -902,17 +932,31 @@ require([
         };
     }
 
+    /**
+     * 根据以下参数，计算对应位置的烟羽模型的等值线  -->持续扩散
+     * 
+     * @param {any} concentration 需要计算的等值线的浓度值
+     * @param {any} x 泄漏点的X坐标
+     * @param {any} y 泄露点的Y坐标
+     * @param {any} level 环境稳定因素等级 界面表中单选框 A-B-C...
+     * @param {any} WindSpeed 风速 m/s
+     * @param {any} Z 泄漏点的高度
+     * @param {any} SouceStrong 源强 泄漏的量 mg
+     * @param {any} H 容器的高度
+     * @param {any} angle  风向
+     */
     function PlumeModel(concentration, x, y, level, WindSpeed, Z, SouceStrong, H, angle) {
         this.x = x;
         this.y = y;
         this.Z = Z;
         this.concentration = concentration;
-        this.SouceStrong = SouceStrong; //大气源强 指瞬时排放的物料质量
-        this.WindSpeed = WindSpeed; //风速
+        this.SouceStrong = SouceStrong; 
+        this.WindSpeed = WindSpeed;
         this.level = level;
-        this.angle = angle; //指与X轴正方向的夹角
-        this.H = H; //指罐高
+        this.angle = angle;
+        this.H = H;
 
+        //根据环境稳定度 计算X轴方向的扩散系数
         function ChangeGammaY(stability, x) {
             switch (stability) {
                 case 'A':
@@ -930,6 +974,7 @@ require([
             }
         }
 
+        //根据环境稳定度， 计算竖直方向的扩散系数
         function ChangeGammaZ(stability, x) {
             switch (stability) {
                 case 'A':
@@ -947,11 +992,11 @@ require([
             }
         }
 
+        //被循环调用，计算每个步进X坐标下的等值线的相对的Y坐标
         function GetGaussYCoordinate(concentration, X, Z, H, stability, WindSpeed, SouceStrong) {
             var sigmaY = ChangeGammaY(stability, X);
             var sigmaZ = ChangeGammaZ(stability, X);
 
-            // console.log(WindSpeed)
             var S = (2 * Math.PI * WindSpeed * sigmaY * sigmaZ * concentration) /
                 (SouceStrong * (Math.exp(Math.pow((Z - H) / sigmaY, 2) / (-2)) +
                     Math.exp(Math.pow((Z + H) / sigmaY, 2) / (-2))));
@@ -964,63 +1009,82 @@ require([
             }
         }
 
+        //计算该等值线的坐标值，生产数组返回
         this.getRings = function getGaussRings() {
             var points = [];
-            var y1 = [];
+            var ys = [];
             points[0] = [this.x, this.y];
-            y1[0] = 0;
+            ys[0] = 0;
             var i = 0.5;
+            var x2;
+            var y2;
             for (var i = 1; i < 3000; i++) {
                 var x1 = 0.5 * i;
                 var tmpY = GetGaussYCoordinate(this.concentration, x1, this.Z, this.H, this.level, this.WindSpeed, this.SouceStrong);
                 if (i != 0 && (tmpY == 0 || isNaN(tmpY))) {
                     continue;
                 }
-                y1.push(tmpY);
-                points.push([this.x + x1, this.y + tmpY]);
+                x2 = x1 * Math.cos(angle) + tmpY * Math.sin(angle);
+                y2 = tmpY * Math.cos(angle) - x1 * Math.sin(angle);
+                ys.push(y2);
+                points.push([this.x + x2, this.y + y2]);
             }
             var count = points.length;
             for (var i = 1; i < count; i++) {
-                points.push([(points[count - i][0]), this.y - y1[count - i]]);
+                points.push([(points[count - i][0]), this.y - ys[count - i]]);
             }
             return points;
         }
     }
 
+    /**
+     *  计算给定条件的蒸汽云爆炸范围 可参照http://www.doc88.com/p-949564165922.html
+     * 
+     * @param {any} Wf 液化石油气形成的蒸汽云中参与爆炸的燃料的质量 参考值 792
+     * @param {any} Qf 燃料的燃烧热 参考值 482700
+     */
     function SteamCloud(Wf, Qf) {
         this.wf = Wf;
         this.qf = Qf;
+        this.Wt = (1.8 * 0.04 * this.wf * this.qf) / 4520000;
 
-        this.Wt = function Wtnt() //TNT当量
-        {
-            var wt = (1.8 * 0.04 * this.wf * this.qf) / 4520;
-            return wt;
-        }
         this.deathRadius = function Radius0() //死亡区
         {
-            var R0 = Math.round(13.6 * Math.pow(this.Wt() / 1000, 0.37));
+            var R0 = Math.round(13.6 * Math.pow(this.Wt / 1000, 0.37));
             return R0;
         }
         this.SeriouslyInjuredRadius = function Radius1() //重伤区
         {
-            var R1 = Math.round(3.784 * Math.pow(this.Wt() / 1000, 0.33));
+            var R1 = Math.round(0.996 * Math.pow(1.8 * 0.04 * this.wf * this.qf / 101325, 0.33));
             return R1;
         }
         this.MinorInhuredRadius = function Radius2() //轻伤区
         {
-            var R2 = Math.round(5.964 * Math.pow(this.Wt() / 1000, 0.33));
+            var R2 = Math.round(1.672 * Math.pow(1.8 * 0.04 * this.wf * this.qf / 101325, 0.33));
             return R2;
         }
     }
 
+    /**
+     * 根据参数，计算对应池火灾的影响范围 参照 http://www.docin.com/p-660747352.html
+     * 
+     * @param {any} combustionHeat 液体的燃烧热
+     * @param {any} cp 表示液体的比定压热容
+     * @param {any} tb 表示液体的沸点
+     * @param {any} to 表示环境温度
+     * @param {any} VaporizationHeat 表示液体的汽化热
+     * @param {any} poolRadius 池子的半径
+     * @param {any} airDensity 空气密度
+     */
     function PoolFire(combustionHeat, cp, tb, to, VaporizationHeat, poolRadius, airDensity) {
 
         var fireSpeed = 0.001 * combustionHeat / (cp * (tb - to) + VaporizationHeat);
         var fireHeight = 84 * poolRadius * Math.pow(fireSpeed / (airDensity * Math.pow(2 * 9.8 * poolRadius, 0.5)), 0.6);
         var Q = (Math.PI * (Math.pow(poolRadius, 2) + 2 * Math.PI * poolRadius * fireHeight)) * fireSpeed * 0.25 * combustionHeat / (72 * Math.pow(fireSpeed, 0.6) + 1);
-        var grade = [37.5, 25, 12.5, 4, 1.6];
+        var grade = [37.5, 25, 12.5, 4, 1.6];   //表示造成不同程度的损失的热辐射强度
         var radius = [];
 
+        //根据不同的强度的热辐射生成不同的半径，放入数组中 返回
         this.getRadius = function () {
             for (var i = 0, max = grade.length; i < max; i++) {
                 var tmpRadius = Math.sqrt(4 * Math.PI * grade[i] / Q);

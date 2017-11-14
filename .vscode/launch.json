@@ -9,7 +9,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
-            "url": "file:///C:/Users/lave/Desktop/web/index.html",
+            "url": "file:///C:/Users/lave/Desktop/map/index.html",
             "webRoot": "${workspaceRoot}"
         }
     ]
