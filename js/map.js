@@ -896,27 +896,33 @@ require([
             var points = [
                 [this.X, this.Y]
             ];
-            var relativeYlArayy = [];
-            relativeYlArayy[0] = 0;
-            var i;
+            var ycoordinates = [0];
+            var xcoordinates = [0];
+            var xcoordinates2 = [];
+            var ycoordinates2 = [];
             var x1;
             var tmp;
             var x2, y2;
-            for (i = 1; i < 3000; i += 1) {
+            for (var i = 1; i < 3000; i += 1) {
                 x1 = 0.5 * i;
                 tmp = this.RelativeY(this.concentration, this.time, x1, this.Z, this.H, this.level, this.windspeed, this.souceStrong);
                 if (!(tmp == 0 || isNaN(tmp))) {
-                    x2 = Math.cos(x1) + Math.sin(tmp);
-                    y2 = Math.cos(tmp) - Math.sin(x1);
-                    relativeYlArayy.push(tmp);
-                    points.push([this.X + x1, this.Y + tmp]);
+                    x2 = Math.cos(2* Math.PI / 360 * angle) + Math.sin(2* Math.PI / 360 * angle);
+                    y2 = Math.cos(2* Math.PI / 360 * angle) - Math.sin(2* Math.PI / 360 * angle);
+                    ycoordinates.push(y2);
+                    xcoordinates.push(x2);
+                    xcoordinates2.push(x1 * Math.cos(2* Math.PI / 360 * angle) - tmpY * Math.sin(2* Math.PI / 360 * angle))
+                    ycoordinates2.push(-tmpY * Math.cos(2* Math.PI / 360 * angle) - x1 * Math.sin(2* Math.PI / 360 * angle))
                 }
             }
-            var count = points.length;
-            for (i = 1; i < count; i += 1) {
-                points.push([points[count - i][0], this.Y - relativeYlArayy[count - i]]);
+            for (var i = 0; i < xcoordinates.length; i++) {
+                points.push([this.x + xcoordinates[i], this.y + ycoordinates[i]]);
             }
-            points.push(points[0]);
+
+            var count = xcoordinates2.length
+            for (var i = 1; i < count; i++) {
+                points.push([this.x + xcoordinates2[count - i], this.y + ycoordinates2[count - i]]);
+            }
             return points;
         };
 
@@ -1012,9 +1018,11 @@ require([
         //计算该等值线的坐标值，生产数组返回
         this.getRings = function getGaussRings() {
             var points = [];
-            var ys = [];
+            var ycoordinates = [0];
+            var xcoordinates = [0];
+            var xcoordinates2 = [];
+            var ycoordinates2 = [];
             points[0] = [this.x, this.y];
-            ys[0] = 0;
             var i = 0.5;
             var x2;
             var y2;
@@ -1024,14 +1032,20 @@ require([
                 if (i != 0 && (tmpY == 0 || isNaN(tmpY))) {
                     continue;
                 }
-                x2 = x1 * Math.cos(angle) + tmpY * Math.sin(angle);
-                y2 = tmpY * Math.cos(angle) - x1 * Math.sin(angle);
-                ys.push(y2);
-                points.push([this.x + x2, this.y + y2]);
+                x2 = x1 * Math.cos(2* Math.PI / 360 * angle) + tmpY * Math.sin(2* Math.PI / 360 * angle);
+                y2 = tmpY * Math.cos(2* Math.PI / 360 * angle) - x1 * Math.sin(2* Math.PI / 360 * angle);
+                ycoordinates.push(y2);
+                xcoordinates.push(x2);
+                xcoordinates2.push(x1 * Math.cos(2* Math.PI / 360 * angle) - tmpY * Math.sin(2* Math.PI / 360 * angle))
+                ycoordinates2.push(-tmpY * Math.cos(2* Math.PI / 360 * angle) - x1 * Math.sin(2* Math.PI / 360 * angle))
             }
-            var count = points.length;
+            for (var i = 0; i < xcoordinates.length; i++) {
+                points.push([this.x + xcoordinates[i], this.y + ycoordinates[i]]);
+            }
+
+            var count = xcoordinates2.length
             for (var i = 1; i < count; i++) {
-                points.push([(points[count - i][0]), this.y - ys[count - i]]);
+                points.push([this.x + xcoordinates2[count - i], this.y + ycoordinates2[count - i]]);
             }
             return points;
         }
